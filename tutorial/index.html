@@ -1,0 +1,1011 @@
+<html>
+<head>
+    <title>Akka Clustering with Java 8 Workshop - Advance Tweetmap Template</title>
+</head>
+<body>
+<div>
+    <p>Welcome to the Advance Tweetmap Tutorial that will show you how to use Akka Clustering with Java 8.  This starts with a basic Play Framework application and uses it to build a reactive tweet map with clustered back-end services.</p>
+
+    <p>The exercises can be completed either in Activator, any IDE or Text Editor.  
+
+    <p>Within the Activator UI you can:
+
+    <ul>
+
+    <li>Browse & edit the code (select Code.  To save a file the keyboard shortcut command-s works.)</li>
+    <li>Add & delete files from the code (select Code and then the plus sign.  To delete open the file and click on delete)</li>
+    <li>Open the code in IntelliJ IDEA or Eclipse (select Code, then the gear dropdown)</li>
+    <li>See the compile output (select Compile)</li>
+    <li>Test the application (select Test)</li>
+    <li>Run the application (select Run)</li>
+    </ul>
+
+    </p>
+
+
+    <h2>View the App</h2>
+
+    <p>
+        Once the application has been compiled and the server started, your application can be accessed at: <a href="http://localhost:9000" target="_blank">http://localhost:9000</a><br/>
+    </p>
+     <p>Check in <a href="#run" class="shortcut">Run</a> to see the server status.<br/>
+    </p>
+</div>
+<div>
+    <h2>Reactive Requests</h2>
+
+    <p>Play Java uses Promises to execute asynchronous tasks in the background.  The Promise is the handle to a future result.  A callback in the form of a Java Lambda is added to the Promise that gets called when the promise completes.  Optionally the recover method can be called with a Java Lambda that is called when the callback fails.</p>
+    <p>The primary way of adding a callback to a Promise is to add a map method that essentially means map the result of the Promise to a new value.  Then when the promise completes the new value is returned as the response.</p>
+
+    <p>1. Create a new route that will search Twitter by updating<a href="#code/conf/routes" class="shortcut">conf/routes</a> with the following route:</p>
+
+    <p>GET   &nbsp;&nbsp; /tweets  &nbsp;&nbsp;&nbsp;&nbsp; controllers.Tweets.search(query: String)</p>
+
+<p>2. Update <a href="#code/app/controllers/Tweets.java" class="shortcut">app/controllers/Tweets.java</a> to add a reactive request handler (or controller) for /tweets:</p>
+<p></p>
+ <pre><code>
+
+    /**
+    * A reactive request is made in Play by returning a Promise of a result.  This makes the request asynchronous
+    * since the server doesn't block waiting for the response.  This frees the server thread to handle other requests.
+    * The callback to the Promise is added as a map, which maps the results to a new value when the Promise completes.
+    * The results of the Promise in this example are mapped to a result (HTTP 200 OK) that gets returned to the client.
+    **/
+    public static Promise&lt;Result&gt; search(String query) {
+        return fetchTweets(query)
+            .map(jsonNode -> ok(jsonNode));
+    }
+
+     /**
+     * Fetch the latest tweets and return the Promise of the json results.
+     * This fetches the tweets asynchronously and fulfills the promise when the results are returned.
+     * The results are first filtered and only returned if the result status was OK.
+     * Then the results are mapped (or transformed) to JSON.
+     * Finally a recover is added to the Promise to return an error Json if the tweets couldn't be fetched.
+     *
+     * @param query
+     * @return
+     */
+     public static Promise&lt;JsonNode&gt; fetchTweets(String query) {
+        Promise&lt;WSResponse&gt; responsePromise = WS.url("http://twitter-search-proxy.herokuapp.com/search/tweets").setQueryParameter("q", query).get();
+        //can also map using method references - WSResponse::asJson
+        return responsePromise
+            .filter(response -> response.getStatus() == Http.Status.OK)
+            .map(response -> response.asJson())
+            .recover(Tweets::errorResponse);
+     }
+
+     /**
+     * The error response when the twitter search fails.
+     *
+     * @param ignored
+     * @return
+     */
+     public static JsonNode errorResponse(Throwable ignored) {
+         return Json.newObject().put("error", "Could not fetch the tweets");
+     }
+
+</code></pre>
+
+    <p>3. Test it: <a href="http://localhost:9000/tweets?query=typesafe" target="_blank">http://localhost:9000/tweets?query=typesafe</a></p>
+    <p></p>
+</div>
+
+<div>
+    <h2>AngularJS UI</h2>
+
+<p>Advance Tweetmap is a single page app that uses AngularJS for the client.  Most of the AngularJS code has already been completed.  This just gives an overview of that code if you are interested.</p>
+
+    <p><a href="#code/build.sbt" class="shortcut">build.sbt</a>  has dependencies on AngularJS and Bootstrap using webjars:</p>
+
+    <code>
+        <pre>
+"org.webjars" % "bootstrap" % "3.0.0",
+"org.webjars" % "angularjs" % "1.2.16",
+        </pre>
+    </code>
+
+<p>2.  AngularJS is then enabled in the <a href="#code/app/views/main.scala.html" class="shortcut">main twirl template:</a></p>
+
+<pre><code>
+&lt;html ng-app="tweetMapApp"&gt;
+&lt;script src="@routes.Assets.versioned("lib/angularjs/angular.min.js")"&gt;&lt;/script&gt;
+</code></pre>
+
+
+<p>3. In  <a href="#code/app/assets/javascripts/index.js" class="shortcut">index.js </a> Angluar is setup to connect to a websocket and fetch the tweets:</p>
+
+<pre><code>
+
+app.factory('Twitter', function($http, $timeout) {
+
+    var ws = new WebSocket("ws://localhost:9000/ws");
+
+    var twitterService = {
+        tweets: [],
+        query: function (query) {
+            ws.send(JSON.stringify({query: query}));
+        }
+    };
+
+    ws.onmessage = function(event) {
+        $timeout(function() {
+            twitterService.tweets = JSON.parse(event.data).statuses;
+        });
+    };
+
+    return twitterService;
+});
+
+app.controller('Search', function($scope, $http, $timeout, Twitter) {
+
+    $scope.search = function() {
+        Twitter.query($scope.query);
+    };
+
+});
+
+app.controller('Tweets', function($scope, $http, $timeout, Twitter) {
+
+    $scope.tweets = [];
+
+    $scope.$watch(
+        function() {
+            return Twitter.tweets;
+        },
+        function(tweets) {
+            $scope.tweets = tweets;
+        }
+    );
+
+});
+</code></pre>
+
+    <p>4. The <a href="#code/app/views/index.scala.html" class="shortcut">index.scala.html</a> file uses the Angular Tweets controller to search for tweets:
+
+<pre><code>
+@(message: String)
+
+@main(message) {
+
+    &lt;div ng-controller="Tweets"&gt;
+        &lt;ul&gt;
+            &lt;li ng-repeat="tweet in tweets"&gt;{{tweet.text}}&lt;/li&gt;
+        &lt;/ul&gt;
+    &lt;/div&gt;
+}
+</code></pre>
+</div>
+
+<div>
+    <h2>Add Websockets</h2>
+
+    <p>Websockets provide a  bi-directional, full-duplex communication channel over a single TCP connection.  They are created in Play using a normal route.  The difference is the controller returns a WebSocket instead of a Result.</p>
+    <p>1. Add a route for the websocket connection to the <a href="#code/conf/routes" class="shortcut">routes </a>file:</p>
+
+    <p>GET &nbsp;&nbsp /ws     &nbsp;&nbsp;&nbsp;&nbsp;              controllers.Tweets.ws</p>
+
+    <p>2. Add a new controller method to create the Websocket in <a href="#code/app/controllers/Tweets.java" class="shortcut">app/controllers/Tweets.java:</a></p>
+
+<pre><code>
+//add this to the import section of the file
+import play.mvc.WebSocket;
+
+//add to body of controller
+/**
+* Create a WebSocket controller that converts the data sent in to JSON.
+* This sets up the WebSocket by adding Java Lambdas to the input channel and the on close event.
+* The Java Lambda in onMessage will get called whenever a new message comes in through the channel.
+* In this example the message is parsed as a json query and then the tweets are fetched based on that query.
+* Fetching tweets returns a promise and the callback to that promise (onRedeem) is a Java Lambda that writes
+* the results out to the client.
+*/
+public static WebSocket&lt;JsonNode&gt; ws() {
+    return WebSocket.whenReady((in, out) -> {
+
+        in.onMessage(jsonNode -> {
+            String query = jsonNode.findPath("query").textValue();
+            fetchTweets(query).onRedeem(json -> out.write(json));
+        });
+
+        in.onClose(() -> {
+        });
+     });
+}
+
+</code></pre>
+    <p>To verify tweets are showing up it is useful to use a browser inspector and then look under network for the path ws.  Under there look at the frame and verify the requests are being sent.  In chrome the network inspector has a bug and the websocket calls are not refreshed unless you tab out and back in. </p>
+
+    <p>5. Run the app and verify the tweets show up: <a href="http://localhost:9000/" target="_blank">http://localhost:9000</a></p>
+
+
+</div>
+
+<div>
+    <h2>Create an Akka Actor</h2>
+
+    <p>1. Create a new UserActor.java file in <a href="#code/app/actors" class="shortcut">/app/actors</a> and update the file to contain the following code:</p>
+
+<pre><code>
+
+package actors;
+
+import akka.actor.*;
+import akka.japi.pf.ReceiveBuilder;
+import com.fasterxml.jackson.databind.JsonNode;
+import controllers.Tweets;
+import scala.concurrent.duration.Duration;
+
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+
+public class UserActor extends AbstractActor {
+
+    /**
+    * The query to search for - empty if a query has not been sent from the user
+    */
+    public Optional&lt;String&gt; optQuery = Optional.empty();
+
+    /**
+    * Creates a new UserActor using these Props.
+    *
+    * @param out
+    * @return
+    */
+    public static Props props(ActorRef out) {
+        return Props.create(UserActor.class, out);
+    }
+
+    /**
+    * The out ActorRef is used to write back out to the websocket client
+    * It is created by Play and set when the UserActor is created.
+    */
+    private final ActorRef out;
+
+    /**
+    * Construct the UserActor and initialize the receive block.
+    * The receive block defines this actor handles.
+    *
+    * @param out
+    */
+    public UserActor(ActorRef out) {
+        this.out = out;
+
+        receive(ReceiveBuilder.
+            //A json message is from the client so parse it to get the query and fetch the tweets.
+            match(JsonNode.class, jsonNode -> {
+                String query = jsonNode.findPath("query").textValue();
+                optQuery = Optional.of(query);
+                runFetchTweets(query);
+            }).
+            //The Update message is sent from the scheduler.  When the Actor receives the
+            //message fetch the tweets only if there is a query from the user.
+            match(Update.class, update -> optQuery.ifPresent(this::runFetchTweets)).
+            matchAny(o -> System.out.println("received unknown message")).build()
+        );
+    }
+
+    /**
+    * Fetch the latest tweets for a given query and send the results to
+    * the out actor - which in turns sends it back up to the client via a websocket.
+    *
+    * @param query
+    */
+    private void runFetchTweets(String query) {
+        Tweets.fetchTweets(query).onRedeem(json -> {
+            out.tell(json, self());
+        });
+    }
+
+
+    /**
+    * The Update class is used to send a message to this actor to
+    * re-run the query and send the results to the client.
+    */
+    public static final class Update {
+    }
+
+    private final ActorSystem system = getContext().system();
+
+    //This will schedule to send the Update message
+    //to this actor after 0ms repeating every 5s.  This will cause this actor to search for new tweets every 5 seconds.
+    Cancellable cancellable = system.scheduler().schedule(Duration.Zero(),
+            Duration.create(5, TimeUnit.SECONDS), self(), new Update(),
+            system.dispatcher(), null);
+
+}
+</code></pre>
+
+</div>
+
+<div>
+    <h2>Update the WebSocket</h2>
+
+    <p>1. In <a href="#code/app/controllers/Tweets.java" class="shortcut">app/controllers/Tweets.java</a> update the WebSocket code to use the UserActor for the connection:</p>
+
+<pre><code>
+
+    //add to import section
+    import actors.UserActor;
+
+
+    //replace the ws() method with the following code
+    public static WebSocket&lt;JsonNode&gt; ws() {
+        //create the UserActor using the static props method.  This will create the Actor with the out actor wired to the
+        //WebSocket out channel.
+        return WebSocket.withActor(UserActor::props);
+    }
+
+
+</code></pre>
+
+<p>5. Verify that the websocket is still connecting and tweets are refreshing <a href="http://localhost:9000/" target="_blank">http://localhost:9000</a>.  You might not be able to see the browser up because the tweets don't change.  So you will need to look at the inspector. </p>
+
+
+</div>
+
+<div>
+    <h2>Update the Twitter Search to add Geo-Coding</h2>
+
+    <p>1. Update <a href="#code/app/controllers/Tweets.java" class="shortcut">app/controllers/Tweets.java</a> to add geo-coding.  Replace the existing fetchTweets method with the one below and add the additional methods.</p>
+
+
+<pre><code>
+    //Additional imports needed
+    import java.util.List;
+    import java.util.Random;
+
+    import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+    import com.fasterxml.jackson.databind.node.ObjectNode;
+
+    import static java.util.stream.Collectors.toList;
+    import static utils.Streams.stream;
+
+    //Replace the existing fetchTweets
+
+    /**
+    * Fetch the latest tweets and return the Promise of the json results.
+    * This fetches the tweets asynchronously and fulfills the promise when the results are returned.
+    * The results are first filtered and only returned if the result status was OK.
+    * Then the results are mapped (or transformed) to JSON.
+    * Finally a recover is added to the Promise to return an error Json if the tweets couldn't be fetched.
+    *
+    * The updated fetchTweets transforms the responses as it does the mapping to add the geo-coding.
+    *
+    * @param query
+    * @return
+    */
+    public static Promise&lt;JsonNode&gt; fetchTweets(String query) {
+        Promise&lt;WSResponse&gt; responsePromise = WS.url("http://twitter-search-proxy.herokuapp.com/search/tweets").setQueryParameter("q", query).get();
+        //can also map using method references - WSResponse::asJson
+        return responsePromise
+            .filter(response -> response.getStatus() == Http.Status.OK)
+            .map(response -> transformStatusResponses(response.asJson()))
+            .recover(Tweets::errorResponse);
+    }
+
+
+    /**
+    * Transform the json responses by adding geo coordinates to each tweet.
+    * Not sure this is the best way to manipulate the Json.  Mostly an experiment
+    * using streams and json based on reactive stocks activator template.
+    *
+    * @param jsonNode
+    */
+    private static JsonNode transformStatusResponses(JsonNode jsonNode) {
+        //create a stream view of the jsonNode iterator
+        List&lt;JsonNode&gt; newJsonList = stream(jsonNode.findPath("statuses"))
+            //map the stream of json to update the values to have the geo-info
+            .map(json -> setCoordinates((ObjectNode) json))
+            .collect(toList());
+
+        ObjectNode objectNode = JsonNodeFactory.instance.objectNode();
+        objectNode.putArray("statuses").addAll(newJsonList);
+
+        return objectNode;
+    }
+
+    /**
+    * Most tweets don't actually have their geo-location set so just randomly set the latitude and longitude.
+    * And sadly there is a bug in the randomizer where the tweets tend to locate themselves near the top of the window.
+    *
+    * @param nextStatus
+    */
+    private static ObjectNode setCoordinates(ObjectNode nextStatus) {
+        nextStatus.putArray("coordinates").add(randomLat()).add(randomLon());
+        return nextStatus;
+    }
+
+    private static Random rand = new java.util.Random();
+
+    private static double randomLat() {
+        return (rand.nextDouble() * 180) - 90;
+    }
+
+    private static double randomLon() {
+        return (rand.nextDouble() * 360) - 180;
+    }
+
+
+</code></pre>
+
+</div>
+
+<div>
+    <h2>Add the Tweet Map</h2>
+
+    <p>1. The webjar dependency on leaflets has already been added to <a href="#code/build.sbt" class="shortcut">build.sbt</a></p>
+
+    <p>2. The Leaflet CSS and JS have already been added to <a href="#code/app/views/main.scala.html" class="shortcut">main.scala.html </a>file:</p>
+
+<pre><code>
+    &lt;link rel='stylesheet' href='@routes.Assets.versioned("lib/leaflet/leaflet.css")'&gt;
+    &lt;script type='text/javascript' src='@routes.Assets.versioned("lib/leaflet/leaflet.js")'&gt;&lt;/script&gt;
+    &lt;script type='text/javascript' src='@routes.Assets.versioned("lib/angular-leaflet-directive/angular-leaflet-directive.min.js")'&gt;&lt;/script&gt;
+</code></pre>
+
+    <p>3. Above the &lt;ul&gt; in <a href="#code/app/views/index.scala.html" class="shortcut">index.scala.html </a> add a map:</p>
+    <pre><code>&lt;leaflet width="100%" height="500px" markers="markers"&gt;&lt;/leaflet&gt;</code></pre>
+
+    <p>4. Update the body of the app.controller('Tweets' ... section of the <a href="#code/app/assets/javascripts/index.js" class="shortcut">index.js </a> file to set marker points on the map from the tweets json by adding the following:</p>
+
+<pre><code>
+    $scope.tweets = [];
+    $scope.markers = [];
+
+    $scope.$watch(
+        function() {
+            return Twitter.tweets;
+        },
+        function(tweets) {
+            $scope.tweets = tweets;
+
+            $scope.markers = tweets.map(function(tweet) {
+                return {
+                    lng: tweet.coordinates[0],
+                    lat: tweet.coordinates[1],
+                    message: tweet.text,
+                    focus: true
+                }
+            });
+        }
+    );
+
+</code></pre>
+
+
+
+
+<p>8. Go to <a href="http://localhost:9000" target="_blank">http://localhost:9000</a> to see the TweetMap!</p>
+</div>
+
+<div>
+
+    <h2>Achitecture Pitfalls?</h2>
+
+    <p>What are some of the problems with the current architecture?</p>
+    <p><b>1. </b>fetchTweets is inside the Application controller and is called from the UserActor - poor separation of concerns.</p>
+    <p><b>2. </b>fetchTweets should be a separate service that can be run and scaled independently from the rest of the application and managed independently.  </p>
+    <p><b>3. </b>In a production scenario the fetchTweets service would need a twitter api token and would need to be shared between clients. The service should be designed in a way that it can be reused and scaled indepedntly. </p>
+
+</div>
+
+<div>
+
+    <h2>Fetch Tweets Service - Akka Actor</h2>
+
+    <p>Create a new actor that will act as the Global Fetch Tweet Service.  Note that the Play WS API requires a running Play Application because creating the client uses play.Play.application().  If it where used in the Akka Actor then the actor could not be run independent from the Play Application.</p>
+    <p>To get around this limitation we will use TweetWS that is defined in <a href="#code/app/utils/TweetWS.java" class="shortcut">TweetWS.java</a> to call the twitter WS API.  It creates a WS client without requiring a Play Application.</p>
+
+    <p><b>1. </b>Create a new TweetService.java file in <a href="#code/app/backend" class="shortcut">/app/backend</a> with the following Actor Definition (this copies the fetch tweets method out of the tweets controller):</p>
+<code><pre>
+package backend;
+
+import akka.actor.AbstractActor;
+import akka.actor.ActorRef;
+import akka.actor.Props;
+import akka.japi.pf.ReceiveBuilder;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import play.libs.F;
+import play.libs.Json;
+import play.libs.ws.WSResponse;
+import play.mvc.Http;
+import utils.TweetWS;
+
+import java.io.*;
+import java.util.List;
+import java.util.Random;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
+
+import static java.util.stream.Collectors.toList;
+import static utils.Streams.stream;
+
+public class TweetService extends AbstractActor {
+
+    public static Props props() {
+        return Props.create(TweetService.class, TweetService::new);
+    }
+
+
+    public TweetService() {
+        receive(ReceiveBuilder.
+                        match(LoadTweet.class, loadTweet -> {
+                            //!! Be sure to store user sender before calling the promise.  This captures
+                            //the sender so that it doesn't get closed over.
+                            ActorRef userSender = sender();
+                            F.Promise&lt;JsonNode&gt; fetchTweetsPromise = fetchTweets(loadTweet.getQuery());
+                            fetchTweetsPromise.onRedeem(jsonNode -> userSender.tell(new NextTweet(jsonNode), self()));
+                        }).
+                        matchAny(o -> System.out.println("received unknown message")).build()
+                        );
+    }
+
+
+    /**
+    * Fetch the latest tweets and return the Promise of the json results.
+    * This fetches the tweets asynchronously and fulfills the promise when the results are returned.
+    * The results are first filtered and only returned if the result status was OK.
+    * Then the results are mapped (or transformed) to JSON.
+    * Finally a recover is added to the Promise to return an error Json if the tweets couldn't be fetched.
+    *
+    * The updated fetchTweets transforms the responses as it does the mapping to add the geo-coding.
+    *
+    * @param query
+    * @return
+    */
+    public static F.Promise&lt;JsonNode&gt; fetchTweets(String query) {
+        F.Promise&lt;WSResponse&gt; responsePromise = TweetWS.url("http://twitter-search-proxy.herokuapp.com/search/tweets").setQueryParameter("q", query).get();
+        //can also map using method references - WSResponse::asJson
+        return responsePromise
+            .filter(response -> response.getStatus() == Http.Status.OK)
+            .map(response -> transformStatusResponses(response.asJson()))
+            .recover(TweetService::errorResponse);
+    }
+
+
+    /**
+    * Transform the json responses by adding geo coordinates to each tweet.
+    * Not sure this is the best way to manipulate the Json.  Mostly an experiment
+    * using streams and json based on reactive stocks activator template.
+    *
+    * @param jsonNode
+    */
+    private static JsonNode transformStatusResponses(JsonNode jsonNode) {
+        //create a stream view of the jsonNode iterator
+        List&lt;JsonNode&gt; newJsonList = stream(jsonNode.findPath("statuses"))
+            //map the stream of json to update the values to have the geo-info
+            .map(json -> setCoordinates((ObjectNode) json))
+            .collect(toList());
+
+        ObjectNode objectNode = JsonNodeFactory.instance.objectNode();
+        objectNode.putArray("statuses").addAll(newJsonList);
+
+        return objectNode;
+    }
+
+    /**
+    * Most tweets don't actually have their geo-location set so just randomly set the latitude and longitude.
+    * And sadly there is a bug in the randomizer where the tweets tend to locate themselves near the top of the window.
+    *
+    * @param nextStatus
+    */
+    private static ObjectNode setCoordinates(ObjectNode nextStatus) {
+        nextStatus.putArray("coordinates").add(randomLat()).add(randomLon());
+        return nextStatus;
+    }
+
+    private static Random rand = new java.util.Random();
+
+    private static double randomLat() {
+        return (rand.nextDouble() * 180) - 90;
+    }
+
+    private static double randomLon() {
+        return (rand.nextDouble() * 360) - 180;
+    }
+
+     /**
+     * The error response when the twitter search fails.
+     *
+     * @param ignored
+     * @return
+     */
+    public static JsonNode errorResponse(Throwable ignored) {
+        return Json.newObject().put("error", "Could not fetch the tweets");
+    }
+
+    public static final class LoadTweet implements Serializable {
+        private String query;
+        private static final long serialVersionUID = 101L;
+
+        public LoadTweet() {
+        }
+
+        public LoadTweet(String query) {
+            this.query = query;
+        }
+
+        public String getQuery() {
+            return query;
+        }
+    }
+
+    public static final class NextTweet implements Serializable {
+        private JsonNode nextTweet;
+        private static final long serialVersionUID = 101L;
+
+        public NextTweet() {
+        }
+
+        public NextTweet(JsonNode nextTweet) {
+            this.nextTweet = nextTweet;
+        }
+
+        public JsonNode getNextTweet() {
+            return nextTweet;
+        }
+
+        private void writeObject(ObjectOutputStream out) throws IOException {
+            BufferedWriter writer = null;
+            try {
+                String nextTweetStr = nextTweet.toString();
+                int tweetLength = nextTweetStr.length();
+                GZIPOutputStream zip = new GZIPOutputStream(out);
+                writer = new BufferedWriter(new OutputStreamWriter(zip, "UTF-8"));
+
+                if (nextTweet == null) {
+                    System.out.println("empty object - just writing header");
+                    writer.write(0);
+                } else {
+                    writer.write(tweetLength);
+                    writer.write(nextTweetStr);
+                    System.out.println("writing nextTweet of string length " + tweetLength);
+                }
+
+            } finally {
+                if (writer != null) {
+                    writer.close();
+                }
+            }
+        }
+
+        private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+            BufferedReader reader = null;
+            try {
+                GZIPInputStream zip = new GZIPInputStream(in);
+                reader = new BufferedReader(new InputStreamReader(zip, "UTF-8"));
+                int tweetLength = reader.read();
+                System.out.println("reading nextTweet of string length " + tweetLength);
+                if (tweetLength > 0) {
+                    String tmpJson = reader.readLine();
+                    ObjectMapper mapper = new ObjectMapper();
+                    nextTweet = mapper.readTree(tmpJson);
+                }
+            } finally {
+                if (reader != null) {
+                    reader.close();
+                }
+            }
+        }
+    }
+ }
+
+ </pre></code>
+   
+</div>
+
+<div>
+
+    <h2>Fetch Tweets Service - Play Plugin</h2>
+
+    <p>Fetch tweets will be a global service that all clients will share.  This will be done by creating an Actors Play Plugin that will create a global instance of the actor and then registering it as a Play plugin.</p>
+
+    <p><b>1. </b>The file<a href="#code/app/actors/Actors.java" class="shortcut">/actors/Actors.java</a> was already added that defines the Actor plugin.  This file just needs to be updated to load the Tweet Loader Actor.  Add the following import and uncomment the line to create an actor:</p>
+ 
+ <code><pre>
+         import backend.TweetService;
+
+         tweetServiceClient = system.actorOf(TweetService.props(), "tweetServiceClient");
+ </pre></code>
+
+    <p><b>2. </b>To register the plugin the file <a href="#code/conf/play.plugins" class="shortcut">/conf/play.plugins</a> was already added that configures the Actor plugin.  The number represents the plugin loading order, by setting it to > 1000 we make sure it’s loaded after the global plugins.</p>
+ <code><pre>
+    1200:actors.Actors
+ </pre></code>
+
+</div>
+<div>
+
+    <h2>Update UserActor</h2>
+
+    <p><a href="#code/app/actors/UserActor.java" class="shortcut">/app/actors/UserActor.java</a> currently calls back into the Tweets Controller methods to fetch tweets.  Change the code so that it gets a reference the Tweet Service Actor and call it to fetch tweets:</p>
+
+    <p><b>1.</b>Update the props of UserActor to take a reference to the TweetService as parameter by updating and adding the following lines:</p>
+ 
+ <code><pre>
+
+    //First add an import for TweetService at the top
+    import backend.TweetService;
+
+    //add a reference to the tweetServiceClient that will be set when this actor is created.
+    private final ActorRef tweetServiceClient;
+
+    //Change the existing props metho to refrence the tweetServiceClient
+    public static Props props(ActorRef out, ActorRef tweetServiceClient) {
+        return Props.create(UserActor.class, () -> new UserActor(out, tweetServiceClient));
+    }
+ </pre></code>
+
+ <p><b>2.</b>And Again inside <a href="#code/app/actors/UserActor.java" class="shortcut">/app/actors/UserActor.java</a>Update the constructor to a reference the tweetServiceClient and update the message handler to process the new tweets from the Tweet Service by adding an additional match block in the constructor:</p>
+ 
+ <code><pre>
+    //Update the constructor of UserActor to take a reference to tweetServiceClient
+    public UserActor(ActorRef out, ActorRef tweetServiceClient) {
+        this.out = out;
+        this.tweetServiceClient = tweetServiceClient;
+
+        receive(ReceiveBuilder.
+            //A json message is from the client so parse it to get the query and fetch the tweets.
+            match(JsonNode.class, jsonNode -> {
+                String query = jsonNode.findPath("query").textValue();
+                optQuery = Optional.of(query);
+                runFetchTweets(query);
+            }).
+            match(TweetService.NextTweet.class, nextTweet -> out.tell(nextTweet.getNextTweet(), self())).
+            //The Update message is sent from the scheduler.  When the Actor receives the
+            //message fetch the tweets only if there is a query from the user.
+            match(Update.class, update -> optQuery.ifPresent(this::runFetchTweets)).
+            matchAny(o -> System.out.println("received unknown message")).build()
+        );
+    }
+ </pre></code>
+
+   <p><b>3.</b>Also inside <a href="#code/app/actors/UserActor.java" class="shortcut">/app/actors/UserActor.java</a>  Change the method runFetchTweets to use the tweetServiceClient actor reference and remove the callback:</p>
+ 
+ <code><pre>
+    private void runFetchTweets(String query) {
+        tweetServiceClient.tell(new TweetService.LoadTweet(query), self());
+    }
+ </pre></code>
+
+
+<p><b>4. </b>Update the creation of the UserActor in <a href="#code/app/controllers/Tweets.java" class="shortcut">app/controllers/Tweets.java</a> to reference the tweet service:</p>
+
+<code><pre>
+    //First add an import for the Actors plugin at the top
+    import actors.Actors;
+
+
+     //Change the WebSocket creation to reference the tweetServiceClient
+    return WebSocket.withActor(out -> UserActor.props(out, Actors.tweetServiceClient()));
+</pre></code>
+
+<p><b>5. </b>Test out your changes - you should be able to still run the application and fetch tweets.  From the client prespective nothing has changed.</p>
+</div>
+
+ <div>
+
+    <h2>Clustering - Part 1</h2>
+
+    <p>Separating out the Tweet Service definitely improved the architecture.  Now lets make the Tweet Service fully reactive by making it a separate service that can be run independently from the main Play Application.</p>
+
+    <p><b>1. </b>First update <a href="#code/conf/application.conf" class="shortcut">/conf/application.conf</a> to add configuration for Akka Clustering by adding the following at the end of the file.  This enables Akka remoting, defines the actor provider to use clustering and defines the seed nodes used to initiate the cluster.</p>
+ 
+ <code><pre>
+   # Akka configuration
+akka {
+
+  loglevel = INFO
+
+  #This changes the actor provider from being local to being cluster aware.
+  actor.provider = "akka.cluster.ClusterActorRefProvider"
+
+  remote.netty.tcp {
+    hostname = "127.0.0.1"
+    port = 2551
+  }
+
+  cluster {
+    #seed nodes are the nodes that other nodes look for to join the cluster.
+    seed-nodes = ["akka.tcp://application@127.0.0.1:2551", "akka.tcp://application@127.0.0.1:2560"]
+    #the default cluster role
+    roles = ["frontend"]
+    auto-down-unreachable-after = 5 seconds
+  }
+}
+</pre></code>
+
+<p><b>2. </b>A Java main application has already been created in <a href="#code/app/backend/MainClusterManager.java" class="shortcut">app/backend/MainClusterManager.java</a>  that will be used to start a stand-alone Akka cluster node.  It uses a Java main to start-up and create an Akka actor system running on a different port from the Play Akka System (this code was already added):</p>
+
+<code><pre>
+    ActorSystem.create("application", config);
+ </pre></code>
+
+<p><b>3. </b> An activator (sbt) command alias has already been added to the build in <a href="#code/build.sbt" class="shortcut">/build.sbt</a> that makes it easy to run the MainClusterManager from activator:</p>
+
+ <code><pre>
+    addCommandAlias("rb", "runMain backend.MainTweetLoader 2552 -Dakka.remote.netty.tcp.port=2552 -Dakka.cluster.roles.0=backend-loader")
+ </pre></code>
+
+<p><b>4. </b>Test out the changes.  First completely shutdown the play server and restart it. Then in a separate terminal window start an instance of the backend service by running:</p>
+ 
+    <code><pre>
+  activator rb
+ </pre></code>
+
+<p>The backend node can be stopped by simply typing a 's' and hitting enter in the terminal window.
+
+ <p>Refresh the web page - this is critical because Play doesn't start the Akka System until after the first run - <a href="http://localhost:9000" target="_blank">http://localhost:9000</a></p>
+
+    <p>You should see in the log output of the terminal windows the cluster being started and the backend joining into the cluster.  In the play log you should see something similar to:</p>
+<code><pre>
+[INFO] [09/27/2014 11:52:01.264] [application-akka.actor.default-dispatcher-16] [Cluster(akka://application)] Cluster Node [akka.tcp://application@127.0.0.1:2551] - Leader is moving node [akka.tcp://application@127.0.0.1:2551] to [Up]
+[INFO] [09/27/2014 11:52:25.133] [application-akka.actor.default-dispatcher-14] [Cluster(akka://application)] Cluster Node [akka.tcp://application@127.0.0.1:2551] - Node [akka.tcp://application@127.0.0.1:2560] is JOINING, roles [backend]
+[INFO] [09/27/2014 11:52:25.258] [application-akka.actor.default-dispatcher-18] [Cluster(akka://application)] Cluster Node [akka.tcp://application@127.0.0.1:2551] - Leader is moving node [akka.tcp://application@127.0.0.1:2560] to [Up]
+ </pre></code>
+ <p>And in the second terminal window you should see something similiar to:</p>
+ <code><pre>
+   <code><pre>
+    [INFO] [09/27/2014 11:52:24.849] [run-main-1] [Cluster(akka://application)] Cluster Node [akka.tcp://application@127.0.0.1:2560] - Starting up...
+    [INFO] [09/27/2014 11:52:24.916] [run-main-1] [Cluster(akka://application)] Cluster Node [akka.tcp://application@127.0.0.1:2560] - Started up successfully
+    [INFO] [09/27/2014 11:52:25.239] [application-akka.actor.default-dispatcher-4] [Cluster(akka://application)] Cluster Node [akka.tcp://application@127.0.0.1:2560] - Welcome from [akka.tcp://application@127.0.0.1:2551]
+ </pre></code>
+ </pre></code>
+
+     <p><b>5. </b>A second node can be started as well in a separate terminal window by running:</p>
+
+ <code><pre>
+  activator rb2
+ </pre></code>
+
+ </div>   
+  
+ <div>
+
+    <h2>Clustering - Part 2</h2>
+
+     <p><b>1. </b>First we want to create an instance of the Tweet Service on the remote Akka Cluster node.  This is done by adding a call to create an instance of the Tweet Service Actor to the <a href="#code/app/backend/MainClusterManager.java" class="shortcut">app/backend/MainClusterManager.java</a> initialize method:</p>
+
+    <code><pre>
+        private static void init(ActorSystem system) {
+            system.actorOf(TweetService.props(), "tweetService");
+        }
+    </pre></code>
+
+     <p><b>2. </b>Update the akka configuration to add a router that uses the tweet service by updating the akka config section of <a href="#code/conf/application.conf" class="shortcut">/conf/application.conf</a> to add the following config (put it inside the akka { config block):</p>
+
+ <code><pre>
+ #add this inside the akka { section of the config   
+ actor.deployment {
+    # Routing to the tweetLoader using a cluster router
+    # By making the router a group it will look for an existing instance of the tweetLoader actor
+    # on any nodes with the role "backend" and use it as a routee
+    /tweetServiceRouter {
+      router = round-robin-group
+      nr-of-instances = 1000
+      cluster {
+        enabled = on
+        routees-path = "/user/tweetService"
+        allow-local-routees = off
+        use-role = "backend"
+      }
+    }
+  }
+ </pre></code>
+
+     <p>Note that the routees-path of the actor matches the name of the Actor we created in the MainClusterManager.  All actors are created in the /user context, so that actor has the full path of /user/tweetService </p>
+
+    <p><b>2. </b>Next we want to an instance of the tweetServiceRouter on the main Play server that will act as a client into the cluster.  We do this by changing the tweetServiceClient so that it is not a a reference to the TweetService Actor but instead a reference to the cluster router.</p>
+
+<p>Update the Actors Plugin <a href="#code/app/actors/Actors.java" class="shortcut">/actors/Actors.java</a> to reference the tweetServiceRouter instead of the actual tweetService:</p>
+
+     <p>In the Actors Plugin add the following imports and then change the line that creates the Tweet Service Actor:</p>
+ <code><pre>
+    import akka.actor.Props;
+    import akka.routing.FromConfig;
+
+    tweetServiceClient =  system.actorOf(Props.empty().withRouter(FromConfig.getInstance()), "tweetServiceRouter");
+ </pre></code>
+ </div>
+
+<div>
+
+     <h2>Testing Clustering</h2>
+
+ <p><b>1.</b> Test out the code by restarting both the front end Play Server and the backend Akka Cluster Node. Everything should still work as before.  On the server you should see:</p>
+
+ <code><pre>
+    Running a query for #javaone
+ </pre></code>
+
+    <p><b>2.</b>Experiment with running multiple nodes in the cluster.  Start the second node in a separate terminal window by running:</p>
+
+    <code><pre>
+  activator rb2
+ </pre></code>
+
+    <p>You should see the requests being balanced between both nodes.  If you stop one node the other node will take all the requests.  Then start the first node back-up and you should see it join the cluster and eventually requests will be routed to it as well.</p>
+
+ </div>
+
+
+<div>
+
+    <h2>Persistence</h2>
+
+    <p><b>1.</b> Start a clustered journal setter. In  <a href="#code/app/backend/MainClusterManager.java" class="shortcut">app/backend/MainClusterManager.java</a> initialize method start a journal setter:</p>
+
+    <code><pre>
+    system.actorOf(SharedJournalSetter.props(), "shared-journal-setter");
+ </pre></code>
+
+    <p><b>2.</b>The following changes in <a href="#code/app/backend/TweetService.java" class="shortcut">/app/backend/TweetService.java</a></p>
+
+    <code><pre>
+    //change TweetService from extending AbstractActor to AbstractPersistentActor
+    extends AbstractPersistentActor
+ </pre></code>
+
+    <code><pre>
+    //add a persistenceId..   A persistent actor must have an identifier that doesn't change across different actor incarnations
+    @Override
+    public String persistenceId() {
+        return "TweetService";
+    }
+ </pre></code>
+
+    <code><pre>
+    //move the message recieve block into receiveCommand
+
+      @Override
+    public PartialFunction<Object, BoxedUnit> receiveRecover() {
+        return null;
+    }
+
+    @Override
+    public PartialFunction<Object, BoxedUnit> receiveCommand() {
+        return ReceiveBuilder.
+                match(LoadTweet.class, loadTweet -> {
+
+                    System.out.println("Running a query for " + loadTweet.query);
+                    //!! Be sure to store user sender before calling the promise.  This captures
+                    //the sender so that it doesn't get closed over.
+                    ActorRef userSender = sender();
+                    F.Promise<JsonNode> fetchTweetsPromise = fetchTweets(loadTweet.getQuery());
+                    fetchTweetsPromise.onRedeem(jsonNode -> userSender.tell(new NextTweet(jsonNode), self()));
+                }).
+                matchAny(o -> System.out.println("received unknown message")).build();
+    }
+ </pre></code>
+
+ <p><b>2.</b>Add to the Akka config the following to setup the shared journal.  Inside the akka { config block add the following:</p>
+
+ <code><pre>
+ persistence {
+    journal {
+      plugin = "akka.persistence.journal.leveldb-shared"
+
+      leveldb-shared.store {
+        dir    = "target/shared-journal"
+         # DO NOT USE 'native = off' IN PRODUCTION !!!
+        native = off
+      }
+    }
+
+    snapshot-store {
+      local.dir = "target/snapshots"
+    }
+  }
+ </pre></code>
+
+
+</div>
+
+
+
+</body>
+</html>
