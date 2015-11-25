@@ -1,0 +1,383 @@
+@(title: String)
+
+<!DOCTYPE html>
+<html lang="en">
+@oheader(title)
+<body>
+<div><!--BEGIN TEMPLATE SETTING-->
+    @templatesettings()
+    <!--END TEMPLATE SETTING-->
+    <!--BEGIN TO TOP--><a id="totop" href="#"><i class="fa fa-angle-up"></i></a><!--END BACK TO TOP-->
+    <div id="wrapper">
+        <!--BEGIN TOPBAR-->
+        @topbar()
+        <!--END TOPBAR-->
+        <!--BEGIN SIDEBAR MENU-->
+        @sidebar()
+        <!--END SIDEBAR MENU-->
+        <!--BEGIN PAGE WRAPPER-->
+        <div id="page-wrapper">
+            <!--BEGIN PAGE HEADER & BREADCRUMB-->
+            <div class="page-header-breadcrumb hide">
+                <div class="page-heading hidden-xs"><h1 class="page-title">Dashboard</h1></div>
+                <ol class="breadcrumb page-breadcrumb">
+                    <li><i class="fa fa-home"></i>&nbsp;<a href="index.html">Home</a>&nbsp;&nbsp;<i class="fa fa-angle-right"></i>&nbsp;&nbsp;</li>
+                    <li class="hide"><a href="#">Dashboard</a>&nbsp;&nbsp;<i class="fa fa-angle-right"></i>&nbsp;&nbsp;</li>
+                    <li class="active">Dashboard</li>
+                </ol>
+            </div>
+            <!--END PAGE HEADER & BREADCRUMB-->
+            <!--BEGIN CONTENT-->
+            <div class="page-content">
+                <div id="tab-general">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="panel">
+                                <div class="panel-body">
+                                    <div id="counter-chart" style="width: 100%; height:292px"></div>
+                                    <div id="site-stats">
+                                        <div class="row">
+                                            <div class="col-md-6 col-sm-6">
+                                                <div class="row">
+                                                    <div class="col-md-4">
+                                                        <div class="stats-chart visits-stats"><input type="text" rel="68" value="0" data-width="90" data-height="90" data-readOnly="true" data-min="0" data-max="100" class="dial"/></div>
+                                                    </div>
+                                                    <div class="col-md-8">
+                                                        <div class="stats-info">
+                                                            <div class="stats-total"><span id='visits-number'>0</span></div>
+                                                            <div class="stats-title">Visits</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 col-sm-6">
+                                                <div class="row">
+                                                    <div class="col-md-4">
+                                                        <div class="stats-chart pageviews-stats"><input type="text" rel="90" value="0" data-width="90" data-height="90" data-readOnly="true" data-min="0" data-max="100" class="dial"/></div>
+                                                    </div>
+                                                    <div class="col-md-8">
+                                                        <div class="stats-info">
+                                                            <div class="stats-total"><span id='pageviews-number'></span></div>
+                                                            <div class="stats-title">Pageviews</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="panel">
+                                        <div class="panel-body">
+                                            <ol id="sample" class="ticker">
+                                                <li>Welcome to Odin - The Ultimate Responsive Admin Template</li>
+                                            </ol>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 col-xs-12">
+                                    <div class="panel">
+                                        <div class="panel-body"><h4 class="block-heading">Earning<span class="pull-right">$<span id='earning-number'></span></span></h4>
+
+                                            <div id="earning-chart" style="width: 100%; height:100px"></div>
+                                        </div>
+                                    </div>
+                                    <div class="panel">
+                                        <div class="panel-body"><h4 class="block-heading">Traffic Sources</h4>
+
+                                            <div id="traffice-sources-chart" style="width: 100%; height:100px"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 col-xs-12">
+                                    <div class="panel">
+                                        <div class="panel-body"><h4 class="block-heading">New Customers<span class="pull-right"><span id='new-customer-number'></span></span></h4>
+
+                                            <div id="new-customer-chart" style="width: 100%; height:100px"></div>
+                                        </div>
+                                    </div>
+                                    <div class="panel">
+                                        <div class="panel-body"><h4 class="block-heading">Internet Speed</h4>
+
+                                            <div id="internet-speed-chart" style="width: 100%; height:100px"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div id="world-map"></div>
+                        </div>
+                        <div class="col-lg-2">
+                            <div class="panel">
+                                <div class="panel-body"><h4 class="block-heading">Users Online<span class="pull-right"><span id='users-number'></span></span></h4>
+                                    <ul class="users-online list-unstyled">
+                                        <li>
+                                            <div class="name"><a href="#">Robert Warren</a></div>
+                                            <div class="status is-online"></div>
+                                        </li>
+                                        <li>
+                                            <div class="name"><a href="#">Judy Jackson</a></div>
+                                            <div class="status is-idle"></div>
+                                        </li>
+                                        <li>
+                                            <div class="name"><a href="#">Susan Bowman</a></div>
+                                            <div class="status is-busy"></div>
+                                        </li>
+                                        <li>
+                                            <div class="name"><a href="#">Frances Perez</a></div>
+                                            <div class="status is-online"></div>
+                                        </li>
+                                        <li>
+                                            <div class="name"><a href="#">Joshua Stevens</a></div>
+                                            <div class="status is-online"></div>
+                                        </li>
+                                        <li>
+                                            <div class="name"><a href="#">Tammy Stewart</a></div>
+                                            <div class="status is-busy"></div>
+                                        </li>
+                                        <li>
+                                            <div class="name"><a href="#">Roger Morris</a></div>
+                                            <div class="status is-idle"></div>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="panel">
+                                <div class="panel-heading pan"><img src="http://lorempixel.com/1280/500/nature/7" class="img-responsive"/></div>
+                                <div class="panel-body">
+                                    <div class="user-profile">
+                                        <div class="info">
+                                            <div class="avatar"><img src="http://lorempixel.com/128/128/people/9/" alt="" class="img-responsive img-circle"/></div>
+                                            <div class="desc">
+                                                <div class="name">John Doe</div>
+                                                <div class="status">Make Different - Make Better</div>
+                                            </div>
+                                        </div>
+                                        <div class="social">
+                                            <div class="row">
+                                                <div class="col-md-4 col-xs-4">
+                                                    <div class="follower text-muted">Follower</div>
+                                                    <div class="count">2,200</div>
+                                                </div>
+                                                <div class="col-md-4 col-xs-4">
+                                                    <div class="follower text-muted">Following</div>
+                                                    <div class="count">1,860</div>
+                                                </div>
+                                                <div class="col-md-4 col-xs-4">
+                                                    <div class="follower text-muted">Tweets</div>
+                                                    <div class="count">2,490</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-3">
+                            <div class="panel">
+                                <div style="overflow:hidden" class="panel-body pan">
+                                    <div class="widget-weather">
+                                        <div class="wt-head"><p>Hungary, Széchenyi Lánchíd</p><span>Thursday, 20-03-2014</span></div>
+                                        <div class="wt-body">
+                                            <canvas id="rain" width="90px" height="90px"></canvas>
+                                            <span>22&deg;</span>
+
+                                            <div class="sub-weather">
+                                                <p class="mrm">
+                                                    <canvas id="partly-cloudy-night" width="48px" height="48px"></canvas>
+                                                    <span>Night</span></p>
+                                                <p class="mlm">
+                                                    <canvas id="wind" width="48px" height="48px"></canvas>
+                                                    <span>Wind</span></p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-3">
+                            <div class="panel">
+                                <div class="panel-body"><h4 class="block-heading"><i class="fa fa-user"></i>&nbsp;
+                                    My Skills</h4>
+
+                                    <div class="my-skills"><p>Photoshop
+
+                                        <div data-hover="tooltip" title="60%" class="progress progress-sm">
+                                            <div role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 60%;" class="progress-bar progress-bar-blue"><span class="sr-only">60% Complete</span></div>
+                                        </div>
+                                        </p><p>Wordpress
+
+                                        <div data-hover="tooltip" title="40%" class="progress progress-sm">
+                                            <div role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width: 40%;" class="progress-bar progress-bar-blue"><span class="sr-only">40% Complete</span></div>
+                                        </div>
+                                        </p><p>HTML
+
+                                        <div data-hover="tooltip" title="80%" class="progress progress-sm">
+                                            <div role="progressbar" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100" style="width: 80%;" class="progress-bar progress-bar-blue"><span class="sr-only">80% Complete</span></div>
+                                        </div>
+                                        </p><p>Wordpress
+
+                                        <div data-hover="tooltip" title="40%" class="progress progress-sm">
+                                            <div role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width: 40%;" class="progress-bar progress-bar-blue"><span class="sr-only">40% Complete</span></div>
+                                        </div>
+                                        </p></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="panel">
+                                <div class="panel-body"><h4 class="block-heading">App Store<span class="pull-right">Total: <span id='app-number'></span></span></h4>
+
+                                    <div class="table-responsive">
+                                        <table class="table table-border-dashed table-hover mbn">
+                                            <thead>
+                                            <tr>
+                                                <th>App Name</th>
+                                                <th>Views</th>
+                                                <th>Download</th>
+                                                <th>Percent</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            <tr>
+                                                <td>Highway Rider</td>
+                                                <td>6.843</td>
+                                                <td>2.346</td>
+                                                <td>
+                                                    <div data-hover="tooltip" title="20%" class="progress progress-xs mbs">
+                                                        <div role="progressbar" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100" style="width: 20%;" class="progress-bar progress-bar-green"><span class="sr-only">20% Complete</span></div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>FaceFighter Ultimate</td>
+                                                <td>3.517</td>
+                                                <td>1.320</td>
+                                                <td>
+                                                    <div data-hover="tooltip" title="40%" class="progress progress-xs mbs">
+                                                        <div role="progressbar" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100" style="width: 40%;" class="progress-bar progress-bar-blue"><span class="sr-only">40% Complete</span></div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>My Talking Tom</td>
+                                                <td>15.803</td>
+                                                <td>4.780</td>
+                                                <td>
+                                                    <div data-hover="tooltip" title="30%" class="progress progress-xs mbs">
+                                                        <div role="progressbar" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100" style="width: 30%;" class="progress-bar progress-bar-green"><span class="sr-only">30% Complete</span></div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>Bomb Me</td>
+                                                <td>14.190</td>
+                                                <td>7.884</td>
+                                                <td>
+                                                    <div data-hover="tooltip" title="60%" class="progress progress-xs mbs">
+                                                        <div role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 60%;" class="progress-bar progress-bar-blue"><span class="sr-only">60% Complete</span></div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>Coin Dozer</td>
+                                                <td>6.285</td>
+                                                <td>628</td>
+                                                <td>
+                                                    <div data-hover="tooltip" title="80%" class="progress progress-xs mbs">
+                                                        <div role="progressbar" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100" style="width: 80%;" class="progress-bar progress-bar-orange"><span class="sr-only">80% Complete</span></div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>Temple Run 2</td>
+                                                <td>7.836</td>
+                                                <td>649</td>
+                                                <td>
+                                                    <div data-hover="tooltip" title="65%" class="progress progress-xs mbs">
+                                                        <div role="progressbar" aria-valuenow="65" aria-valuemin="0" aria-valuemax="100" style="width: 65%;" class="progress-bar progress-bar-yellow"><span class="sr-only">65% Complete</span></div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-4">
+                            <div class="panel panel-primary">
+                                <div class="panel-heading pan"><img src="http://lorempixel.com/750/500/food/8/" class="img-responsive"/></div>
+                                <div class="panel-footer text-center"><a href="#download" class="plm prm"><span class="fa fa-download fa-2x"></span></a><a href="#facebook" class="plm prm"><span class="fa fa-facebook fa-2x"></span></a><a href="#twitter" class="plm prm"><span class="fa fa-twitter fa-2x"></span></a><a href="#share" class="plm prm"><span class="fa fa-share fa-2x"></span></a></div>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="panel">
+                                <div class="panel-body"><h4 class="block-heading">ToDo's</h4>
+
+                                    <div id="todos-list">
+                                        <ul id="todos-list-sort" class="list-unstyled">
+                                            <li>
+                                                <div class="input-group"><input id="todos-list-input" type="text" placeholder="Key word" value="" class="form-control"/><span class="input-group-btn"><button id="todos-list-add" type="button" class="btn btn-primary">Add</button></span></div>
+                                            </li>
+                                            <li><input type="checkbox" id="task-item-1"/><label for="task-item-1">Learn a key board shortcut</label><a href="javascript:;" data-hover="tooltip" data-original-title="remove" class="delete"><span class="fa fa-trash-o"></span></a></li>
+                                            <li><input type="checkbox" id="task-item-2"/><label for="task-item-2">Fix the HTML code</label><a href="javascript:;" data-hover="tooltip" data-original-title="remove" class="delete"><span class="fa fa-trash-o"></span></a></li>
+                                            <li><input type="checkbox" id="task-item-3"/><label for="task-item-3">Fix the php code</label><a href="javascript:;" data-hover="tooltip" data-original-title="remove" class="delete"><span class="fa fa-trash-o"></span></a></li>
+                                            <li><input type="checkbox" id="task-item-4"/><label for="task-item-4">Convert HTML to Wordpress</label><a href="javascript:;" data-hover="tooltip" data-original-title="remove" class="delete"><span class="fa fa-trash-o"></span></a></li>
+                                            <li><input type="checkbox" id="task-item-5"/><label for="task-item-5">Convert HTML to Opencart</label><a href="javascript:;" data-hover="tooltip" data-original-title="remove" class="delete"><span class="fa fa-trash-o"></span></a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="panel">
+                                <div class="panel-heading pan pbxxl">
+                                    <div id="ex-slider" data-ride="carousel" class="carousel slide pbl">
+                                        <ol class="carousel-indicators list-indicators">
+                                            <li data-target="#ex-slider" data-slide-to="0" class="active"></li>
+                                            <li data-target="#ex-slider" data-slide-to="1"></li>
+                                            <li data-target="#ex-slider" data-slide-to="2"></li>
+                                            <li data-target="#ex-slider" data-slide-to="3"></li>
+                                            <li data-target="#ex-slider" data-slide-to="4"></li>
+                                        </ol>
+                                        <div class="carousel-inner">
+                                            <div class="item active"><img src="http://lorempixel.com/750/500/food/2/" alt="" class="img-responsive"/></div>
+                                            <div class="item"><img src="http://lorempixel.com/750/500/food/1/" alt="" class="img-responsive"/></div>
+                                            <div class="item"><img src="http://lorempixel.com/750/500/food/3/" alt="" class="img-responsive"/></div>
+                                            <div class="item"><img src="http://lorempixel.com/750/500/food/4/" alt="" class="img-responsive"/></div>
+                                            <div class="item"><img src="http://lorempixel.com/750/500/food/5/" alt="" class="img-responsive"/></div>
+                                        </div>
+                                        <a href="#ex-slider" data-slide="prev" class="left carousel-control"><i class="fa fa-chevron-left fa-2x"></i></a><a href="#ex-slider" data-slide="next" class="right carousel-control"><i class="fa fa-chevron-right fa-2x"></i></a></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--END CONTENT-->
+            <!--BEGIN FOOTER-->
+            <div class="page-footer">
+                <div class="copyright">2014 © Odin - The Ultimate Responsive Admin Template.</div>
+            </div>
+            <!--END FOOTER--></div>
+        <!--END PAGE WRAPPER--></div>
+</div>
+@ofooter()
+</body>
+</html>

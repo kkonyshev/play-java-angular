@@ -18,14 +18,15 @@ public class Tweets extends Controller {
         return ok(views.html.index.render("TweetMap"));
     }
 
-    public static Result odin() {
-        return ok(views.html.odin.render("odin title"));
+    public static Result odinindex() {
+        return ok(views.html.odinindex.render("odin title"));
     }
 
 
     public static Result login() {
         return ok(
                 views.html.login.render(Form.form(Login.class))
+                ///views.html.odin.render("login", Form.form(Login.class))
         );
     }
 
