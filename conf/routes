@@ -4,6 +4,8 @@
 
 GET        /                    controllers.Tweets.index
 
+GET        /odin                controllers.Tweets.odin
+
 GET        /login               controllers.Tweets.login()
 POST       /login               controllers.Tweets.authenticate()
 
