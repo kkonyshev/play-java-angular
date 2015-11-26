@@ -1,27 +1,22 @@
 package controllers;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import play.libs.F.Promise;
-import play.libs.Json;
-import play.libs.ws.WS;
-import play.libs.ws.WSResponse;
-import play.mvc.Controller;
-import play.mvc.Http;
-import play.mvc.Result;
 import play.data.Form;
-import play.mvc.*;
+import play.mvc.Controller;
+import play.mvc.Result;
+import play.mvc.Security;
 
-public class Tweets extends Controller {
+public class Admin extends Controller {
 
-    @Security.Authenticated(Secured.class)
+    //@Security.Authenticated(Secured.class)
     public static Result index() {
-        return ok(views.html.index.render("TweetMap"));
+        return ok(
+                views.html.admin.index.render("Admin dashboard")
+        );
     }
-
 
     public static Result login() {
         return ok(
-                views.html.login.render(Form.form(Login.class))
+                views.html.admin.login.render(Form.form(Login.class))
         );
     }
 
@@ -29,25 +24,27 @@ public class Tweets extends Controller {
         session().clear();
         flash("success", "You've been logged out");
         return redirect(
-                routes.Tweets.login()
+                routes.Admin.login()
         );
     }
 
     public static Result authenticate() {
         Form<Login> loginForm = Form.form(Login.class).bindFromRequest();
         if (loginForm.hasErrors()) {
-            return badRequest(views.html.login.render(loginForm));
+            return badRequest(views.html.admin.login.render(loginForm));
         } else {
             session().clear();
             session("email", loginForm.get().email);
             return redirect(
-                    routes.Tweets.index()
+                    routes.Admin.index()
             );
         }
     }
 
 
-    public static Object authenticate(String email, String password) {
+    public static Object authenticateUser(String email, String password) {
+        System.out.println("email: " + email);
+        System.out.println("password: " + password);
         if (email==null || email.length()==0 || password==null || password.length()==0) {
             return null;
         } else {
@@ -60,7 +57,7 @@ public class Tweets extends Controller {
         public String password;
 
         public String validate() {
-            if (Tweets.authenticate(email, password) == null) {
+            if (Admin.authenticateUser(email, password) == null) {
                 return "Invalid user or password";
             }
             return null;
