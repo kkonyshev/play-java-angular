@@ -25,15 +25,16 @@
 <body id="signin-page" class="animated bounceInDown">
 <div id="signin-page-content">
 
-    @helper.form(action = routes.Admin.authenticate()) {
+    @helper.form(routes.Admin.authenticate) {
 
         <h1 class="block-heading">Sign In</h1>
         <p>Dear user, log in to access the admin area!</p>
 
         @if(form.hasGlobalErrors) {
-        <p class="error">
-            @form.globalError.message
-        </p>
+    <div class="alert alert-danger alert-dismissable">
+        <button type="button" data-dismiss="alert" aria-hidden="true" class="close">×</button>
+        <strong>Oh snap!</strong> @form.globalError.message
+    </div>
         }
 
         @if(flash.contains("success")) {

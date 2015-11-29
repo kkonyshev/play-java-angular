@@ -14,7 +14,8 @@ libraryDependencies ++= Seq(
     "com.typesafe.akka" %% "akka-contrib" % akka,
     "com.typesafe.akka" %% "akka-testkit" % akka % "test",
     "com.typesafe.akka" %% "akka-persistence-experimental" % akka exclude("org.iq80.leveldb","leveldb"),
-    "org.iq80.leveldb"  %  "leveldb" % "0.7"
+    "org.iq80.leveldb"  %  "leveldb" % "0.7",
+    "postgresql" % "postgresql" % "9.1-901-1.jdbc4"
 )
 
 scalaVersion := "2.11.1"

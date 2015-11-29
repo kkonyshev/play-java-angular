@@ -2,19 +2,14 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
-GET        /                    controllers.Tweets.index
+GET        /                    controllers.Admin.index
 
 GET        /admin               controllers.Admin.index
+
 GET        /admin/login         controllers.Admin.login
+POST       /admin/login         controllers.Admin.authenticate
+
 GET        /admin/logout        controllers.Admin.logout
-POST       /admin/login         controllers.Admin.authenticate()
-
-
-
-GET        /login               controllers.Tweets.login()
-POST       /login               controllers.Tweets.authenticate()
-
-GET        /logout              controllers.Tweets.logout()
 
 
 # Use `Assets.versioned` to enable Play 2.3's Asset Fingerprinting
