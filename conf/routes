@@ -12,5 +12,10 @@ POST       /admin/login         controllers.Admin.authenticate
 GET        /admin/logout        controllers.Admin.logout
 
 
+GET         /user/              controllers.Admin.getUsers
+GET         /user/:email        controllers.Admin.getUser(email: String)
+POST        /user               controllers.Admin.createUser
+
+
 # Use `Assets.versioned` to enable Play 2.3's Asset Fingerprinting
 GET        /assets/*file        controllers.Assets.versioned(path="/public", file: Asset)

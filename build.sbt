@@ -1,3 +1,7 @@
+import com.typesafe.sbt.packager.docker.DockerPlugin
+import com.typesafe.sbt.web.SbtWeb
+import play.PlayJava
+
 name := "advance-tweetmap-java8"
 
 version := "1.0-SNAPSHOT"
