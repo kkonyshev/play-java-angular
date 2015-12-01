@@ -3,19 +3,20 @@
 # ~~~~
 
 GET        /                    controllers.Admin.index
-
 GET        /admin               controllers.Admin.index
 
+GET        /admin/logout        controllers.Admin.logout
 GET        /admin/login         controllers.Admin.login
 POST       /admin/login         controllers.Admin.authenticate
 
-GET        /admin/logout        controllers.Admin.logout
 
+GET         /user/              controllers.UserAccountController.getUserList
+GET         /user/:email        controllers.UserAccountController.getUser(email: String)
+POST        /user/              controllers.UserAccountController.createUser
 
-GET         /user/              controllers.Admin.getUsers
-GET         /user/:email        controllers.Admin.getUser(email: String)
-POST        /user               controllers.Admin.createUser
-
+GET         /seller/            controllers.SellerController.getSellerList
+GET         /seller/:id         controllers.SellerController.getSeller(id: Long)
+POST        /seller/            controllers.SellerController.createSeller
 
 # Use `Assets.versioned` to enable Play 2.3's Asset Fingerprinting
 GET        /assets/*file        controllers.Assets.versioned(path="/public", file: Asset)

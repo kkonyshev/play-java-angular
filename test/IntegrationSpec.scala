@@ -18,7 +18,7 @@ class IntegrationSpec extends Specification {
 
       browser.goTo("http://localhost:" + port)
 
-      browser.pageSource must contain("TweetMap")
+      browser.pageSource must contain("Security area")
     }
   }
 }
