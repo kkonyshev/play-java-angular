@@ -48,11 +48,11 @@ public class ModelsTest extends WithApplication {
         Seller seller = new Seller("Travaller's Coffee");
         seller.save();
 
-        SellPoint pointOne = SellPoint.create(seller, "На Речном");
+        SellPoint pointOne = SellPoint.create(seller, "На Речном", 0.1d, 0.2d);
         //System.out.println("pointOne id: " + pointOne.id);
         //System.out.println("seller id: " + pointOne.seller.name);
 
-        SellPoint pointTwo = SellPoint.create(seller, "На Горском");
+        SellPoint pointTwo = SellPoint.create(seller, "На Горском", 0.1d, 0.2d);
         //System.out.println("pointOne id: " + pointTwo.id);
         //System.out.println("seller id: " + pointTwo.seller.name);
 

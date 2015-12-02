@@ -12,6 +12,8 @@ public class SellPoint extends Model {
     @GeneratedValue(strategy=GenerationType.SEQUENCE)
     public Long id;
     public String name;
+    public Double lat;
+    public double lon;
     @ManyToOne
     public Seller seller;
 
@@ -19,13 +21,15 @@ public class SellPoint extends Model {
             Long.class, SellPoint.class
     );
 
-    public static SellPoint create(Seller seller, String name) {
+    public static SellPoint create(Seller seller, String name, Double lat, Double lon) {
         SellPoint sellPoint = new SellPoint();
         sellPoint.seller = Seller.find.ref(seller.id);
         sellPoint.name = name;
+        sellPoint.lat = lat;
+        sellPoint.lon = lon;
         sellPoint.save();
-        seller.sellPoints.add(sellPoint);
-        seller.save();
+        //sellPoint.seller.sellPoints.add(sellPoint);
+        //sellPoint.seller.save();
         return sellPoint;
     }
 

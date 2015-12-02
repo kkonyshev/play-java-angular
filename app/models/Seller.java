@@ -13,8 +13,8 @@ public class Seller extends Model {
     @GeneratedValue(strategy=GenerationType.SEQUENCE)
     public Long id;
     public String name;
-    @ManyToMany(cascade = CascadeType.REMOVE)
-    public List<SellPoint> sellPoints = new ArrayList<SellPoint>();
+    //@ManyToMany(cascade = CascadeType.REMOVE)
+    //public List<SellPoint> sellPoints = new ArrayList<SellPoint>();
 
     public Seller(String name) {
         this.name = name;
